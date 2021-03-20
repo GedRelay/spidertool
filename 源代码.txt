@@ -1,0 +1,217 @@
+from PySide2.QtWidgets import QApplication, QMessageBox
+from PySide2.QtUiTools import QUiLoader
+from PySide2.QtGui import  QIcon
+import tkinter.filedialog
+import random
+from bs4 import BeautifulSoup
+app = QApplication([])
+ui = QUiLoader().load('spider.ui')
+import requests
+
+#以下是信号函数
+def set_post_way():#获取提交方式
+    return ui.post_text.currentText()
+
+def set_url(defaultUrl='http://www.baidu.com'):#获取链接
+    url = ui.url_text.text()
+    if url == '':
+        return defaultUrl #默认网址
+    else:
+        return url
+
+def set_user_agent():#获取浏览器
+    USER_AGENTS = ['Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_8; en-us) AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50',
+ 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-us) AppleWebKit/534.50 (KHTML, like Gecko) Version/5.1 Safari/534.50',
+ 'Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0;',
+ 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.0; Trident/4.0)',
+ 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)',
+ 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)',
+ 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.6; rv:2.0.1) Gecko/20100101 Firefox/4.0.1',
+ 'Mozilla/5.0 (Windows NT 6.1; rv:2.0.1) Gecko/20100101 Firefox/4.0.1',
+ 'Opera/9.80 (Macintosh; Intel Mac OS X 10.6.8; U; en) Presto/2.8.131 Version/11.11',
+ 'Opera/9.80 (Windows NT 6.1; U; en) Presto/2.8.131 Version/11.11',
+ 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_0) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.56 Safari/535.11',
+ 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; Maxthon 2.0)',
+ 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; TencentTraveler 4.0)',
+ 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)',
+ 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; The World)',
+ 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; Trident/4.0; SE 2.X MetaSr 1.0; SE 2.X MetaSr 1.0; .NET CLR 2.0.50727; SE 2.X MetaSr 1.0)',
+ 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; 360SE)',
+ 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; Avant Browser)',
+ 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)',
+ 'Mozilla/5.0 (Linux;u;Android 4.2.2;zh-cn;) AppleWebKit/534.46 (KHTML,likeGecko) Version/5.1 Mobile Safari/10600.6.3 (compatible; Baiduspider/2.0;+http://www.baidu.com/search/spider.html)',
+ 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_3 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5',
+ 'Mozilla/5.0 (iPod; U; CPU iPhone OS 4_3_3 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5',
+ 'Mozilla/5.0 (iPad; U; CPU OS 4_3_3 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5',
+ 'Mozilla/5.0 (Linux; U; Android 2.3.7; en-us; Nexus One Build/FRF91) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1',
+ 'MQQBrowser/26 Mozilla/5.0 (Linux; U; Android 2.3.7; zh-cn; MB200 Build/GRJ22; CyanogenMod-7) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1',
+ 'Opera/9.80 (Android 2.3.4; Linux; Opera Mobi/build-1107180945; U; en-GB) Presto/2.8.149 Version/11.10',
+ 'Mozilla/5.0 (Linux; U; Android 3.0; en-us; Xoom Build/HRI39) AppleWebKit/534.13 (KHTML, like Gecko) Version/4.0 Safari/534.13',
+ 'Mozilla/5.0 (BlackBerry; U; BlackBerry 9800; en) AppleWebKit/534.1+ (KHTML, like Gecko) Version/6.0.0.337 Mobile Safari/534.1+',
+ 'Mozilla/5.0 (hp-tablet; Linux; hpwOS/3.0.0; U; en-US) AppleWebKit/534.6 (KHTML, like Gecko) wOSBrowser/233.70 Safari/534.6 TouchPad/1.0',
+ 'Mozilla/5.0 (SymbianOS/9.4; Series60/5.0 NokiaN97-1/20.0.019; Profile/MIDP-2.1 Configuration/CLDC-1.1) AppleWebKit/525 (KHTML, like Gecko) BrowserNG/7.1.18124',
+ 'Mozilla/5.0 (compatible; MSIE 9.0; Windows Phone OS 7.5; Trident/5.0; IEMobile/9.0; HTC; Titan)',
+ 'UCWEB7.0.2.37/28/999',
+ 'NOKIA5700/ UCWEB7.0.2.37/28/999',
+ 'Openwave/ UCWEB7.0.2.37/28/999',
+ 'Mozilla/4.0 (compatible; MSIE 6.0; ) Opera/UCWEB7.0.2.37/28/999']
+    if ui.browser_text.currentText() == '随机浏览器':
+        return random.choice(USER_AGENTS)
+    else:
+        return ui.browser_text.currentText()
+
+def set_proxies():#获取代理ip
+    ip = ui.proxies_text.text()
+    if ip == '': return None
+    proxies = {"http": "http://" + ip,
+               "https": "https://" + ip}
+    return proxies
+
+def set_timeout():#获取最长访问时间
+    return ui.timeout_text.text()
+
+def status_mean(status_code):#获取状态码的意思
+    mean = {100:'继续。客户端应继续其请求',
+            101:'切换协议。服务器根据客户端的请求切换协议。只能切换到更高级的协议，例如，切换到HTTP的新版本协议',
+            200:'请求成功。',
+            201:'已创建。成功请求并创建了新的资源',
+            202:'已接受。已经接受请求，但未处理完成',
+            203:'非授权信息。请求成功。但返回的meta信息不在原始的服务器，而是一个副本',
+            204:'无内容。服务器成功处理，但未返回内容。在未更新网页的情况下，可确保浏览器继续显示当前文档',
+            205:'重置内容。服务器处理成功，用户终端（例如：浏览器）应重置文档视图。可通过此返回码清除浏览器的表单域',
+            206:'部分内容。服务器成功处理了部分GET请求',
+            300:'多种选择。请求的资源可包括多个位置，相应可返回一个资源特征与地址的列表用于用户终端（例如：浏览器）选择',
+            301:'永久移动。请求的资源已被永久的移动到新URI，返回信息会包括新的URI，浏览器会自动定向到新URI。今后任何新的请求都应使用新的URI代替',
+            302:'临时移动。与301类似。但资源只是临时被移动。客户端应继续使用原有URI',
+            303:'查看其它地址。与301类似。使用GET和POST请求查看',
+            304:'未修改。所请求的资源未修改，服务器返回此状态码时，不会返回任何资源。客户端通常会缓存访问过的资源，通过提供一个头信息指出客户端希望只返回在指定日期之后修改的资源',
+            305:'使用代理。所请求的资源必须通过代理访问',
+            306:'已经被废弃的HTTP状态码',
+            307:'临时重定向。与302类似。使用GET请求重定向',
+            400:'客户端请求的语法错误，服务器无法理解',
+            401:'请求要求用户的身份认证',
+            402:'保留，将来使用',
+            403:'服务器理解请求客户端的请求，但是拒绝执行此请求',
+            404:'服务器无法根据客户端的请求找到资源（网页）。通过此代码，网站设计人员可设置"您所请求的资源无法找到"的个性页面',
+            405:'客户端请求中的方法被禁止',
+            406:'服务器无法根据客户端请求的内容特性完成请求',
+            407:'请求要求代理的身份认证，与401类似，但请求者应当使用代理进行授权',
+            408:'服务器等待客户端发送的请求时间过长，超时',
+            409:'服务器完成客户端的 PUT 请求时可能返回此代码，服务器处理请求时发生了冲突',
+            410:'客户端请求的资源已经不存在。410不同于404，如果资源以前有现在被永久删除了可使用410代码，网站设计人员可通过301代码指定资源的新位置',
+            411:'服务器无法处理客户端发送的不带Content-Length的请求信息',
+            412:'客户端请求信息的先决条件错误',
+            413:'由于请求的实体过大，服务器无法处理，因此拒绝请求。为防止客户端的连续请求，服务器可能会关闭连接。如果只是服务器暂时无法处理，则会包含一个Retry-After的响应信息',
+            414:'请求的URI过长（URI通常为网址），服务器无法处理',
+            415:'服务器无法处理请求附带的媒体格式',
+            416:'客户端请求的范围无效',
+            417:'服务器无法满足Expect的请求头信息',
+            500:'服务器内部错误，无法完成请求',
+            501:'服务器不支持请求的功能，无法完成请求',
+            502:'作为网关或者代理工作的服务器尝试执行请求时，从远程服务器接收到了一个无效的响应',
+            503:'由于超载或系统维护，服务器暂时的无法处理客户端的请求。延时的长度可包含在服务器的Retry-After头信息中',
+            504:'充当网关或代理的服务器，未及时从远端服务器获取请求',
+            505:'服务器不支持请求的HTTP协议的版本，无法完成处理'}
+    return '状态码说明：' + mean[status_code]
+
+def set_cookies():#获取cookies
+    cookies = {}
+    rowcount = ui.cookies_table.rowCount()
+    for i in range(rowcount):
+        key = ui.cookies_table.item(i,0)
+        val = ui.cookies_table.item(i,1)
+        try:
+            cookies[key.text()] = val.text()
+        except:
+            print("无效的cookie值")
+    if cookies == {}: return None
+    return cookies
+
+def set_datas():#获取datas
+    datas = {}
+    rowcount = ui.datas_table.rowCount()
+    for i in range(rowcount):
+        key = ui.datas_table.item(i,0)
+        val = ui.datas_table.item(i,1)
+        try:
+            datas[key.text()] = val.text()
+        except:
+            ptint("无效的data值")
+    if datas == {}: return None
+    return datas
+
+
+def add_cookie():#添加cookie
+    ui.cookies_table.insertRow(0)
+
+def del_cookie():#删除cookie
+    ui.cookies_table.removeRow(ui.cookies_table.currentRow())
+
+def add_data():#添加data
+    ui.datas_table.insertRow(0)
+
+def del_data():#删除data
+    ui.datas_table.removeRow(ui.datas_table.currentRow())
+
+def copy_respond_text():#复制响应文本
+    ui.respond_text.selectAll()
+    ui.respond_text.copy()
+
+def clear_all():#清空界面
+    ui.url_text.setText('')
+    ui.proxies_text.setText('')
+    ui.timeout_text.setText('10')
+    ui.cookies_table.clearContents()
+    ui.cookies_table.setRowCount(0)
+    ui.datas_table.clearContents()
+    ui.datas_table.setRowCount(0)
+    ui.status_code_text.setText('')
+    ui.status_mean_label.setText('状态码说明：')
+    ui.respond_text.setPlainText('')
+    ui.respond_cookies_text.setPlainText('')
+
+def save_file():
+    root = tkinter.Tk()    # 创建一个Tkinter.Tk()实例
+    root.withdraw()       # 将Tkinter.Tk()实例隐藏
+    fpath = tkinter.filedialog.asksaveasfilename(title=u'另存为', filetypes=[("TXT", ".txt")])
+    f = open(str(fpath) + '.txt','w',encoding='UTF-8')
+    f.write(ui.respond_text.toPlainText())
+    f.close()
+
+
+def start_request():#开始访问
+    method = set_post_way()#请求方式
+    url = set_url()#url
+    user_agent = set_user_agent()#浏览器
+    proxies = set_proxies()#代理ip
+    timeout = eval(set_timeout())#请求时间
+    cookies = set_cookies()#cookies
+    datas = set_datas()#datas
+    headers = {"User-Agent":user_agent}#header
+
+    session = requests.session()
+    r = session.request(method,url = url,headers = headers,timeout = timeout,proxies = proxies, cookies = cookies,data = datas)
+    set_cookie=requests.utils.dict_from_cookiejar(session.cookies)
+    r.encoding = r.apparent_encoding
+
+    ui.status_code_text.setText(str(r.status_code))#设置状态码
+    ui.status_mean_label.setText(status_mean(r.status_code))#设置状态码说明
+    soup = BeautifulSoup(r.text,'html.parser')#做汤
+    ui.respond_text.setPlainText(soup.prettify())#设置响应文本
+    ui.respond_cookies_text.setPlainText(str(set_cookie))#设置set-cookies
+
+#以下是主函数
+try:
+    ui.add_cookie_button.clicked.connect(add_cookie)#添加cookie按钮
+    ui.del_cookie_button.clicked.connect(del_cookie)#删除cookie按钮
+    ui.add_data_button.clicked.connect(add_data)#添加data按钮
+    ui.del_data_button.clicked.connect(del_data)#删除data按钮
+    ui.save_button.clicked.connect(save_file)#另存为按钮
+    ui.copy_button.clicked.connect(copy_respond_text)#复制按钮
+    ui.clear_button.clicked.connect(clear_all)#清空按钮
+    ui.request_button.clicked.connect(start_request)#访问按钮
+except:
+    ui.respond_text.setPlainText('好像出了什么问题。。。')
+app.setWindowIcon(QIcon('spider.png'))
+ui.show()
+app.exec_()
